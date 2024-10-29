@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .container {
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .tooltip {
+      position: absolute;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      pointer-events: none;
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      white-space: nowrap;
+    }
+
+    .point {
+      transition: transform 0.3s ease, r 0.2s ease;
+      cursor: pointer;
+      opacity: 0.8;
+    }
+
+    .point-infinite {
+      fill: #ef4444;
+    }
+
+    .point-platinum {
+      fill: #6366f1;
+    }
+
+    .point-oro {
+      fill: #eab308;
+    }
+
+    .point-clasica {
+      fill: #22c55e;
+    }
+
+    .legend {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+    }
+
+    .title {
+      font-family: Arial, sans-serif;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .axis-label {
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .filter-container {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .filter-container label {
+      margin-right: 10px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    .filter-container select {
+      padding: 5px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">Comparación de Tarjetas: Anualidad vs Recompensa</div>
+    <div class="filter-container">
+      <label for="card-type-filter">Filtrar por tipo de tarjeta:</label>
+      <select id="card-type-filter">
+        <option value="all">Todas</option>
+        <option value="infinite">Infinite</option>
+        <option value="platinum">Platinum</option>
+        <option value="oro">Oro</option>
+        <option value="clasica">Clásica</option>
+      </select>
+    </div>
+    <div id="chart"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script>
+    const data = [
+      { banco: "Afirme Platinum", anualidad: 2500.00, recompensa: 1000.00 },
+      { banco: "BanBajío Platinum", anualidad: 2250.00, recompensa: 300.00 },
+      { banco: "Banregio Platinum", anualidad: 0.00, recompensa: 125.00 },
+      { banco: "BBVA Platinum", anualidad: 2579.00, recompensa: 1000.00 },
+      { banco: "Banorte Platinum", anualidad: 2350.00, recompensa: 400.00 },
+      { banco: "Citibanamex Platinum", anualidad: 2620.00, recompensa: 1000.00 },
+      { banco: "Inbursa Platinum", anualidad: 1320.00, recompensa: 100.00 },
+      { banco: "HSBC Platinum", anualidad: 2978.00, recompensa: 82.11 },
+      { banco: "Santander Platinum", anualidad: 2500.00, recompensa: 73.68 },
+      { banco: "Scotiabank Platinum", anualidad: 2640.00, recompensa: 64.67 },
+      { banco: "Afirme Oro", anualidad: 2500.00, recompensa: 1000.00 },
+      { banco: "BanBajío Oro", anualidad: 2250.00, recompensa: 300.00 },
+      { banco: "Banregio Oro", anualidad: 0.00, recompensa: 100.00 },
+      { banco: "BBVA Oro", anualidad: 2579.00, recompensa: 1000.00 },
+      { banco: "Banorte Oro", anualidad: 2350.00, recompensa: 400.00 },
+      { banco: "Citibanamex Oro", anualidad: 2620.00, recompensa: 1000.00 },
+      { banco: "Inbursa Oro", anualidad: 1320.00, recompensa: 100.00 },
+      { banco: "HSBC Oro", anualidad: 2978.00, recompensa: 57.89 },
+      { banco: "Santander Oro", anualidad: 2500.00, recompensa: 36.84 },
+      { banco: "Scotiabank Oro", anualidad: 2640.00, recompensa: 47.37 },
+      { banco: "Afirme Clásica", anualidad: 2500.00, recompensa: 1000.00 },
+      { banco: "BanBajío Clásica", anualidad: 2250.00, recompensa: 3000.00 },
+      { banco: "Banregio Clásica", anualidad: 0.00, recompensa: 75.00 },
+      { banco: "BBVA Clásica", anualidad: 2579.00, recompensa: 1000.00 },
+      { banco: "Banorte Clásica", anualidad: 2350.00, recompensa: 400.00 },
+      { banco: "Citibanamex Clásica", anualidad: 2620.00, recompensa: 1000.00 },
+      { banco: "Inbursa Clásica", anualidad: 1320.00, recompensa: 100.00 },
+      { banco: "HSBC Clásica", anualidad: 2978.00, recompensa: 26.32 },
+      { banco: "Santander Clásica", anualidad: 2500.00, recompensa: 0.00 },
+      { banco: "Scotiabank Clásica", anualidad: 2640.00, recompensa: 36.84 },
+      { banco: "BBVA Infinite", anualidad: 6247.00, recompensa: 1000.00 },
+      { banco: "Banorte Infinite", anualidad: 5900.00, recompensa: 400.00 },
+      { banco: "Citibanamex Infinite", anualidad: 20000.00, recompensa: 0.00 },
+      { banco: "HSBC Infinite", anualidad: 6770.00, recompensa: 126.32 },
+      { banco: "Santander Infinite", anualidad: 6000.00, recompensa: 147.37 },
+      { banco: "Scotiabank Infinite", anualidad: 20000.00, recompensa: 105.26 }
+    ];
+
+    // Configuración del gráfico
+    const width = 1000;
+    const height = 700;
+    const margin = { top: 50, right: 220, bottom: 70, left: 80 };
+    const innerWidth = width - margin.left - margin.right;
+    const innerHeight = height - margin.top - margin.bottom;
+
+    // Crear el SVG
+    const svg = d3.select("#chart")
+      .append("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+    // Crear el contenedor principal
+    const g = svg.append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // Escalas
+    const xScale = d3.scaleLinear()
+      .domain([0, d3.max(data, d => d.anualidad) + 2000])
+      .range([0, innerWidth])
+      .nice();
+
+    const yScale = d3.scaleLinear()
+      .domain([0, d3.max(data, d => d.recompensa) + 500])
+      .range([innerHeight, 0])
+      .nice();
+
+    // Ejes
+    const xAxis = d3.axisBottom(xScale)
+      .tickFormat(d => `$${d.toLocaleString()}`);
+    const yAxis = d3.axisLeft(yScale)
+      .tickFormat(d => `$${d}`);
+
+    // Agregar ejes
+    const xAxisG = g.append("g")
+      .attr("transform", `translate(0,${innerHeight})`)
+      .call(xAxis);
+    
+    xAxisG.append("text")
+      .attr("fill", "black")
+      .attr("x", innerWidth / 2)
+      .attr("y", 50)
+      .attr("text-anchor", "middle")
+      .attr("class", "axis-label")
+      .text("Anualidad (MXN)");
+
+    const yAxisG = g.append("g")
+      .call(yAxis);
+
+    yAxisG.append("text")
+      .attr("fill", "black")
+      .attr("transform", "rotate(-90)")
+      .attr("y", -60)
+      .attr("x", -innerHeight / 2)
+      .attr("text-anchor", "middle")
+      .attr("class", "axis-label")
+      .text("Recompensa por $10,000 MXN");
+
+    // Crear tooltip
+    const tooltip = d3.select("body")
+      .append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
+
+    // Función para obtener el tipo de tarjeta
+    function getCardType(banco) {
+      if (banco.includes('Infinite')) return 'infinite';
+      if (banco.includes('Platinum')) return 'platinum';
+      if (banco.includes('Oro')) return 'oro';
+      return 'clasica';
+    }
+
+    // Contenedor de puntos
+    const pointsContainer = g.append("g").attr("class", "points-container");
+
+    // Función para actualizar el gráfico según el filtro
+    function updateChart() {
+      const selectedType = document.getElementById('card-type-filter').value;
+      let filteredData = data;
+      if (selectedType !== 'all') {
+        filteredData = data.filter(d => getCardType(d.banco) === selectedType);
+      }
+
+      // Clonar los datos para evitar mutaciones
+      const nodes = filteredData.map(d => ({ ...d }));
+
+      // Aplicar simulación sólo si el filtro es diferente de 'all'
+      if (selectedType !== 'all') {
+        const simulation = d3.forceSimulation(nodes)
+          .force('x', d3.forceX(d => xScale(d.anualidad)).strength(1))
+          .force('y', d3.forceY(d => yScale(d.recompensa)))
+          .force('collide', d3.forceCollide(8))
+          .stop();
+
+        for (let i = 0; i < 120; ++i) simulation.tick();
+
+        // Asegurar que los puntos no salgan del área del gráfico
+        nodes.forEach(d => {
+          d.x = Math.max(0, Math.min(innerWidth, d.x));
+          d.y = Math.max(0, Math.min(innerHeight, d.y));
+        });
+      } else {
+        // Sin simulación, usar posiciones exactas
+        nodes.forEach(d => {
+          d.x = xScale(d.anualidad);
+          d.y = yScale(d.recompensa);
+        });
+      }
+
+      // Actualizar los puntos
+      const updatedPoints = pointsContainer.selectAll("circle")
+        .data(nodes, d => d.banco);
+
+      updatedPoints.join(
+        enter => enter.append("circle")
+          .attr("class", d => `point point-${getCardType(d.banco)}`)
+          .attr("r", 5)
+          .attr("cx", d => d.x)
+          .attr("cy", d => d.y)
+          .on("mouseover", function(event, d) {
+            d3.select(this)
+              .transition()
+              .duration(200)
+              .attr("r", 8)
+              .style("opacity", 1);
+            
+            tooltip.transition()
+              .duration(200)
+              .style("opacity", .9);
+              
+            tooltip.html(`
+              <strong>${d.banco}</strong><br/>
+              Anualidad: $${d.anualidad.toLocaleString()}<br/>
+              Recompensa: $${d.recompensa.toFixed(2)}
+            `)
+            .style("left", (event.pageX + 15) + "px")
+            .style("top", (event.pageY - 28) + "px");
+          })
+          .on("mouseout", function(event, d) {
+            d3.select(this)
+              .transition()
+              .duration(200)
+              .attr("r", 5)
+              .style("opacity", 0.8);
+            
+            tooltip.transition()
+              .duration(500)
+              .style("opacity", 0);
+          }),
+        update => update
+          .transition()
+          .duration(500)
+          .attr("cx", d => d.x)
+          .attr("cy", d => d.y),
+        exit => exit.remove()
+      );
+    }
+
+    // Event listener para el filtro
+    document.getElementById('card-type-filter').addEventListener('change', updateChart);
+
+    // Inicializar el gráfico
+    updateChart();
+
+    // Agregar leyenda
+    const legend = svg.append("g")
+      .attr("class", "legend")
+      .attr("transform", `translate(${width - margin.right + 40}, ${margin.top})`);
+
+    const legendData = [
+      { type: 'infinite', label: 'Tarjetas Infinite' },
+      { type: 'platinum', label: 'Tarjetas Platinum' },
+      { type: 'oro', label: 'Tarjetas Oro' },
+      { type: 'clasica', label: 'Tarjetas Clásica' }
+    ];
+
+    legendData.forEach((item, index) => {
+      legend.append("circle")
+        .attr("cx", 0)
+        .attr("cy", index * 25)
+        .attr("r", 5)
+        .attr("class", `point-${item.type}`);
+
+      legend.append("text")
+        .attr("x", 15)
+        .attr("y", index * 25 + 4)
+        .text(item.label);
+    });
+  </script>
+</body>
+</html>
